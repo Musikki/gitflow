@@ -1,0 +1,130 @@
+#!/bin/sh
+
+# Bitbucket api client
+#
+# supported features:
+# - pull request : pull_request
+#
+
+API_ENDPOINT="https://api.bitbucket.org/2.0/repositories"
+
+
+pull_request() {
+
+	# import utils
+	. "$GITFLOW_DIR/utils/feedback"
+
+	# get remote path
+	remote=$1
+	remote=$(echo $remote | sed 's/git@bitbucket.org://')
+	remote="${remote%.*}"
+
+	echo
+	echo "New review (pull request)"
+	# step 1 - select branches
+
+	#defaults
+	from_branch=$(git_current_branch)
+	to_branch=$DEVELOP_BRANCH
+	echo
+	echo "- Branches: "
+	read -p "  from [$from_branch]: " from_branch_input
+	read -p "  to [$to_branch]: " to_branch_input
+	if [ -n "$from_branch_input" ]; then 
+		from_branch=$from_branch_input 
+	fi
+	if [ -n "$to_branch_input" ]; then 
+		to_branch=$to_branch_input 
+	fi
+
+	# step 2 - select reviewers
+	# @TODO	- list reviewers from logs	
+
+	#step 3 - get pull request details
+	echo
+    echo "- Review details:"
+    read -p "  Title: " title
+    read -p "  Description: " description
+
+
+
+    # step 4 read user and password
+    echo
+	echo "- Authentication: "
+	read -p "  username: " username
+	echo -n "  password: "
+	stty -echo
+	read password
+	stty echo
+	echo
+
+    request_payload="
+   {
+	\"title\": \"$title\",
+	\"description\": \"$description\",
+	\"source\": {
+	   \"branch\": {
+	       \"name\": \"$from_branch\"
+	     },
+	   \"repository\": {
+	       \"full_name\": \"$remote\"
+	     }
+	  },
+	\"destination\": {
+	   \"branch\": {
+	       \"name\": \"$to_branch\"
+	     }
+	  },
+	\"close_source_branch\": false
+   }"
+
+	print "Pull request summary" "confirm all properties! \n    -- title is mandatory"
+	echo "$request_payload"
+	echo
+    read -p "- press RETURN to continue ..." to_continue
+
+    # process request
+    echo "> sending..."
+  	response=$(curl -X POST -H "Content-Type: application/json" -u $username:$password \
+  	$API_ENDPOINT/$remote/pullrequests \
+  	-d "$request_payload" --silent)
+
+	# handle responses
+	if [ -n "$response" ]; then
+
+		# final pull request id	
+		pull_request_id=$(get_from_json "$response" "id")
+		
+		if [ -n "$pull_request_id" ]; then
+			
+			# format final url indication
+			print "Pull request created" "https://bitbucket.org/$remote/pull-requests/$pull_request_id"
+		else
+			# error message
+			message=$(get_from_json "$response" "message")
+			if [ -n "$message" ]; then
+				print "Problem processing request" "$message"
+			fi
+		fi
+	else
+		print "Problem processing request" "Wrong credentials !"
+	fi
+}
+
+
+get_from_json() {
+	result=$(echo $1 | awk -F=":" -v RS="," '$1~/"'$2'"/ {print}' | sed 's/\"//g' | sed 's/'$2'://')
+	echo $result
+}
+
+print() {
+	echo
+	echo "- $1"
+	echo 
+	echo "    * $2"
+	echo 
+}
+
+
+
+

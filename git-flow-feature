@@ -46,6 +46,7 @@ init() {
 usage() {
 	echo "usage: git flow feature [list] [-v]"
 	echo "       git flow feature start [-F] <name> [<base>]"
+	echo "       git flow feature review [-rFkDS] [<name|nameprefix>]"
 	echo "       git flow feature finish [-rFkDS] [<name|nameprefix>]"
 	echo "       git flow feature publish <name>"
 	echo "       git flow feature track <name>"
@@ -229,7 +230,57 @@ cmd_start() {
 	echo
 }
 
+#review custom action
+cmd_review() {
+	
+	remote=$(git config --get remote.origin.url)
+
+	#step 1 - confirm if it's a supported service
+	case "$remote" in 
+  		*bitbucket*)
+  			#import client lib
+  			. "$GITFLOW_DIR/services/bitbucket"
+			
+    		pull_request $remote
+    		;;
+    	*)
+    		echo "invalid service specified!!"
+    		exit 1
+    		;;
+	esac
+}
+
 cmd_finish() {
+	echo
+	echo "--------------------------------------"
+	echo " $(git_current_branch) "
+	echo 
+	echo "You are about to declare this feature as finished"
+	echo "Please choose one1 of the following:"
+	echo "   1) Send to review (pull request)"
+	echo "   2) Finish feature and close branch"
+	echo
+	read -p " option : " finish_option
+	
+	case $finish_option in 
+  		1)
+  			cmd_review
+    		;;
+    	2)
+    		finish
+    		;;
+    	*)
+    		echo 
+    		echo " - Invalid option!"
+    		;;
+	esac
+
+	exit 1
+}
+
+
+finish() {	
+
 	DEFINE_boolean fetch false "fetch from $ORIGIN before performing finish" F
 	DEFINE_boolean rebase false "rebase instead of merge" r
 	DEFINE_boolean keep false "keep branch after performing finish" k
