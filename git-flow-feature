@@ -256,7 +256,7 @@ cmd_finish() {
 	echo " $(git_current_branch) "
 	echo 
 	echo "You are about to declare this feature as finished"
-	echo "Please choose one1 of the following:"
+	echo "Please choose one of the following:"
 	echo "   1) Send to review (pull request)"
 	echo "   2) Finish feature and close branch"
 	echo
