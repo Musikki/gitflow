@@ -14,10 +14,23 @@ pull_request() {
 	# import utils
 	. "$GITFLOW_DIR/utils/feedback"
 
-	# get remote path
-	remote=$1
-	remote=$(echo $remote | sed 's/git@bitbucket.org://')
-	remote="${remote%.*}"
+ # get remote path
+  resource=$1
+  regexpr_https="^https://([[:alnum:]]+)@bitbucket.org/([[:alnum:]]+)/([[:print:]]+)\.git$"
+  regexpr_ssh="^([[:alnum:]]+)@bitbucket.org:([[:alnum:]]+)/([[:print:]]+)\.git$"
+ 
+  if [[ $resource =~ $regexpr_https ]]; then
+    owner=${BASH_REMATCH[2]}
+    repo=${BASH_REMATCH[3]}
+  elif [[ $resource =~ $regexpr_ssh ]]; then
+    owner=${BASH_REMATCH[2]}
+    repo=${BASH_REMATCH[3]}
+  else
+  	print "Error" "Can't parse resource url"
+  	exit 1
+  fi
+
+  remote="$owner/$repo"
 
 	echo
 	echo "New review (pull request)"
