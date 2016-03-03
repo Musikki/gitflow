@@ -71,6 +71,12 @@ gitflow you're currently developing.
 
 When done, open a pull request to your feature branch.
 
+If a shFlags error message is shown please run the following within the working folder:
+
+    git submodule init
+    git submodule update
+
+
 License terms
 -------------
 git-flow is published under the liberal terms of the BSD License, see the
@@ -101,6 +107,8 @@ The ``-d`` flag will accept all defaults.
   		git flow feature
   		git flow feature start <name> [<base>]
   		git flow feature finish <name>
+      git flow feature review (generates a pull request - depends on service compatibility)
+       - bitbucket
   
   For feature branches, the `<base>` arg must be a commit on `develop`.
 
@@ -109,13 +117,6 @@ The ``-d`` flag will accept all defaults.
   		git flow feature publish <name>
 		  git flow feature pull <remote> <name>
 
-* To list/start/finish release branches, use:
-  
-  		git flow release
-  		git flow release start <release> [<base>]
-  		git flow release finish <release>
-  
-  For release branches, the `<base>` arg must be a commit on `develop`.
   
 * To list/start/finish hotfix branches, use:
   
